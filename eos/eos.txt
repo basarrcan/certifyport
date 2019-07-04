@@ -1,0 +1,8 @@
+Private key: 5HvrX39RRquDZ6hhCn7VDQEcxRECtaaNprHDQYK73myvSeE3Lbw
+Public key: EOS5JJDKoLimXEHdzfbUE3WiUzVodSTX4M15JA66h1HVRdgT4cS92
+
+accountname: cerifyeos111
+
+cleos -u https://jungle2.cryptolions.io:443
+
+cerify wallet pass: PW5JESzDhNSCZ2RMcuduL2nzGWp7gpbd78eNVyaaUja33QMeamcov
