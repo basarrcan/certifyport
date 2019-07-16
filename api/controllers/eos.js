@@ -1,4 +1,5 @@
 const { Api, JsonRpc, RpcError } = require('eosjs');
+const ecc = require('eosjs-ecc')
 const fetch = require('node-fetch');                                    // node only; not needed in browsers
 const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');      // development only
 const { TextEncoder, TextDecoder } = require('util');
@@ -88,6 +89,92 @@ exports.tn_createCertificate = async (req, res, next) => {
       success: true,
       errorCode: "",
       message: "Certificate with " + certificateId + " id is added for corporate id " + corporateId + ".",
+      data: result
+    });
+  }
+  catch (error) {
+    return res.status(400).json({
+      success: false,
+      errorCode: error,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+}
+
+exports.tn_createSigner = async (req, res, next) => {
+  try {
+    const privateKey = await ecc.randomKey();
+    const publicKey = await ecc.privateToPublic(privateKey);
+
+    const result = await eos.transact({
+      actions: [{
+        account: 'eosio',
+        name: 'newaccount',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          creator: process.env.EOS_CONTRACT,
+          name: req.body.accountName,
+          owner: {
+            threshold: 1,
+            keys: [{
+              key: publicKey,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+          active: {
+            threshold: 1,
+            keys: [{
+              key: publicKey,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'buyrambytes',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          payer: process.env.EOS_CONTRACT,
+          receiver: req.body.accountName,
+          bytes: 3048,
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'delegatebw',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          from: process.env.EOS_CONTRACT,
+          receiver: req.body.accountName,
+          stake_net_quantity: '0.1000 EOS',
+          stake_cpu_quantity: '0.1000 EOS',
+          transfer: false,
+        }
+      }]
+    }, {
+      blocksBehind: 3,
+      expireSeconds: 30,
+    });
+    return res.status(201).json({
+      success: true,
+      errorCode: "",
+      message: "Account " + req.body.accountName + " created ",
+      keys: {privateKey: privateKey, publicKey: publicKey},
       data: result
     });
   }
