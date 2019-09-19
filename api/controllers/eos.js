@@ -52,16 +52,7 @@ exports.tn_createCorporate = async (req, res, next) => {
 
 exports.tn_createCertificate = async (req, res, next) => {
   try {
-    const { certificateId, corporateId, certificateTemplate, assignees, signers } = req.body;
-    let signersToSend = [];
-    await signers.forEach(signer => {
-        signersToSend.push(
-            {
-                name: signer,
-                issigned: false
-            }
-        );
-    });
+    const { certificateId, corporateId, certificateTemplate, assignees } = req.body;
     // kontratın addcustomer actionını çağırma
     const result = await eos.transact({
       actions: [{
@@ -75,8 +66,7 @@ exports.tn_createCertificate = async (req, res, next) => {
           id: certificateId,
           corporateid: corporateId,
           certtemplate: certificateTemplate,
-          assingnees: assignees,
-          signers: signersToSend
+          assignees
         },
       }]
       },
@@ -101,6 +91,49 @@ exports.tn_createCertificate = async (req, res, next) => {
     });
   }
 }
+
+exports.tn_addSigner = async (req, res, next) => {
+  try {
+    const { certificateId, corporateId, signers } = req.body;
+    console.log(signers);
+    // kontratın addcustomer actionını çağırma
+    const result = await eos.transact({
+      actions: [{
+        account: process.env.EOS_CONTRACT,
+        name: 'addsigner',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          id: certificateId,
+          corporateid: corporateId,
+          signers
+        },
+      }]
+      },
+      {
+          blocksBehind: 3,
+          expireSeconds: 30,
+      });
+
+    return res.status(201).json({
+      success: true,
+      errorCode: "",
+      message: "Signer(s) with " + signers + " id is added",
+      data: result
+    });
+  }
+  catch (error) {
+    return res.status(400).json({
+      success: false,
+      errorCode: error.message,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+}
+
 
 exports.tn_createSigner = async (req, res, next) => {
   try {
@@ -233,20 +266,26 @@ exports.tn_signCertificate = async (req, res, next) => {
 exports.tn_getCertificate = async (req, res, next) => {
   try {
     const { certificateId, corporateId } = req.query;
+    if(typeof corporateId === 'undefined') {
+      throw new Error("Valid corporateId had not been provided.");
+    }
+    if(typeof certificateId === 'undefined') {
+      throw new Error("Valid certificateId had not been provided.");
+    }
     const result = await getTable("certificate", corporateId, certificateId);
     console.log(result);
     return res.status(201).json({
       success: true,
       errorCode: "",
-      message: "Certificate with " + certificateId + "returned",
+      message: "Certificate with " + certificateId + " id returned",
       data: result
     });
   }
   catch (error) {
     return res.status(400).json({
       success: false,
-      errorCode: error,
-      message: "Something went wrong, please check your inputs.",
+      errorCode: "",
+      message: error.message || "Something went wrong.",
       data: {}
     });
   }
@@ -255,11 +294,14 @@ exports.tn_getCertificate = async (req, res, next) => {
 exports.tn_getCorporate = async (req, res, next) => {
   try {
     const { corporateId } = req.query;
+    if(typeof corporateId === 'undefined') {
+      throw new Error("Valid corporateId had not been provided.");
+    }
     const result = await getTable("corporate", process.env.EOS_CONTRACT, corporateId);
     return res.status(201).json({
       success: true,
       errorCode: "",
-      message: "Corporate with " + corporateId + "returned",
+      message: "Corporate with " + corporateId + " id returned",
       data: result
     });
   }
@@ -267,7 +309,7 @@ exports.tn_getCorporate = async (req, res, next) => {
     return res.status(400).json({
       success: false,
       errorCode: error,
-      message: "Something went wrong, please check your inputs.",
+      message: error.message || "Something went wrong.",
       data: {}
     });
   }
@@ -285,5 +327,8 @@ async function getTable(tableName, scope, key) {
     show_payer: false,         // Optional: Show ram payer
     limit: 1,
   });
+  if(results.rows.length == 0) {
+    throw new Error("No index found in " + tableName + " table with the key value: " + key);
+  }
     return results.rows[0];
 };

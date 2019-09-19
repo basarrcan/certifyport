@@ -1,0 +1,177 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.1",
+    "types": [],
+    "structs": [
+        {
+            "name": "addsigner",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "corporateid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "signers",
+                    "type": "signer[]"
+                }
+            ]
+        },
+        {
+            "name": "certificate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "certtemplate",
+                    "type": "string"
+                },
+                {
+                    "name": "assignees",
+                    "type": "uint64[]"
+                },
+                {
+                    "name": "signers",
+                    "type": "signer[]"
+                }
+            ]
+        },
+        {
+            "name": "corporate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "create_amount",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "createcert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "corporateid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "certtemplate",
+                    "type": "string"
+                },
+                {
+                    "name": "assignees",
+                    "type": "uint64[]"
+                }
+            ]
+        },
+        {
+            "name": "createcorp",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "create_amount",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "signcert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "corporateid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "signerr",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "signer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "issigned",
+                    "type": "bool"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "addsigner",
+            "type": "addsigner",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "createcert",
+            "type": "createcert",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "createcorp",
+            "type": "createcorp",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "signcert",
+            "type": "signcert",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "certificate",
+            "type": "certificate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "corporate",
+            "type": "corporate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}
