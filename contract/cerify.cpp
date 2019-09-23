@@ -56,7 +56,7 @@ CONTRACT cerify : public eosio::contract
 		certificate_table _certificate(_self, corporateid);
         corporate_table _corporate(_self, _self.value);
 
-		auto corp_itr = _corporate.find(id);
+		auto corp_itr = _corporate.find(corporateid);
 		check(corp_itr != _corporate.end(), "Corporate couldn't found.");
 
         _corporate.modify(corp_itr, _self, [&](auto &co) {
