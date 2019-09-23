@@ -98,12 +98,12 @@ CONTRACT cerify : public eosio::contract
         vector<signer> signersArr = itr->signers;
         for(int i = 0; i < signersArr.size(); i++) {
             if(signersArr[i].name == signerr) {
-                signersArr[i].issigned = true;
+                signersArr[i].issigned = 1;
                 _certificate.modify(itr, _self, [&](auto &c) {
                     c.signers = signersArr;
                 });
+				break;
             }
-            break;
         }
 	}
 

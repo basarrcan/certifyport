@@ -225,7 +225,7 @@ exports.tn_signCertificate = async (req, res, next) => {
   try {
     const { signer, certificateId, corporateId, signerPrivate } = req.body;
     const signSignatureProvider = new JsSignatureProvider([signerPrivate]);
-    const signEos = new Api({ rpc, signSignatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+    const signEos = new Api({ rpc, signatureProvider: signSignatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
     const result = await signEos.transact({
       actions: [{
         account: process.env.EOS_CONTRACT,
@@ -235,14 +235,14 @@ exports.tn_signCertificate = async (req, res, next) => {
           permission: 'active',
         }],
         data: {
-          signer: signer,
-          certificateid: certificateId,
-          corporateid: corporateId
+          id: certificateId,
+          corporateid: corporateId,
+          signerr: signer
         },
       }]
       },
       {
-          blocksBehind: 3,
+          blocksBehind: 30,
           expireSeconds: 30,
       });
 
@@ -256,7 +256,7 @@ exports.tn_signCertificate = async (req, res, next) => {
   catch (error) {
     return res.status(400).json({
       success: false,
-      errorCode: error,
+      errorCode: error.message,
       message: "Something went wrong, please check your inputs.",
       data: {}
     });
