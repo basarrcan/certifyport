@@ -4,6 +4,20 @@
     "types": [],
     "structs": [
         {
+            "name": "addamount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "amount",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "addsigner",
             "base": "",
             "fields": [
@@ -135,6 +149,11 @@
         }
     ],
     "actions": [
+        {
+            "name": "addamount",
+            "type": "addamount",
+            "ricardian_contract": ""
+        },
         {
             "name": "addsigner",
             "type": "addsigner",

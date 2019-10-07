@@ -51,6 +51,21 @@ CONTRACT cerify : public eosio::contract
 		});
 	}
 
+	ACTION addamount(uint64_t id, uint64_t amount)
+	{
+		require_auth(_self);
+
+		corporate_table _corporate(_self, _self.value);
+
+		auto itr = _corporate.find(id);
+		check(itr != _corporate.end(), "Company has not been found.");
+		uint64_t currentAmount = itr->create_amount;
+
+		_corporate.modify(itr, _self, [&](auto &c) {
+			c.create_amount = currentAmount + amount;
+		});
+	}
+
 	ACTION createcert(uint64_t id, uint64_t corporateid, string certtemplate, vector<uint64_t> assignees)
 	{
 		certificate_table _certificate(_self, corporateid);
@@ -108,4 +123,4 @@ CONTRACT cerify : public eosio::contract
 	}
 
 };
-EOSIO_DISPATCH(cerify, (createcorp)(createcert)(addsigner)(signcert))
+EOSIO_DISPATCH(cerify, (createcorp)(addamount)(createcert)(addsigner)(signcert))

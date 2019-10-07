@@ -50,6 +50,46 @@ exports.tn_createCorporate = async (req, res, next) => {
   }
 }
 
+exports.tn_addAmount = async (req, res, next) => {
+  try {
+    const { corporateId, amount } = req.body;
+    // kontratın addcustomer actionını çağırma
+    const result = await eos.transact({
+      actions: [{
+        account: process.env.EOS_CONTRACT,
+        name: 'addamount',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          id: corporateId,
+          amount
+        },
+      }]
+      },
+      {
+          blocksBehind: 3,
+          expireSeconds: 30,
+      });
+
+    return res.status(201).json({
+      success: true,
+      errorCode: "",
+      message: amount + " added to " + corporateId + " .",
+      data: result
+    });
+  }
+  catch (error) {
+    return res.status(400).json({
+      success: false,
+      errorCode: error,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+}
+
 exports.tn_createCertificate = async (req, res, next) => {
   try {
     const { certificateId, corporateId, certificateTemplate, assignees } = req.body;

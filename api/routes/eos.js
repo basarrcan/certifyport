@@ -4,6 +4,7 @@ const router = express.Router();
 const eosController = require('../controllers/eos');
 
 router.post("/createcorporate", eosController.tn_createCorporate);
+router.post("/addamount", eosController.tn_addAmount);
 router.post("/createcertificate", eosController.tn_createCertificate);
 router.post("/addsigner", eosController.tn_addSigner);
 router.post("/signcertificate", eosController.tn_signCertificate);
