@@ -116,6 +116,20 @@
             ]
         },
         {
+            "name": "deletecert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "corporateid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "signcert",
             "base": "",
             "fields": [
@@ -167,6 +181,11 @@
         {
             "name": "createcorp",
             "type": "createcorp",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "deletecert",
+            "type": "deletecert",
             "ricardian_contract": ""
         },
         {

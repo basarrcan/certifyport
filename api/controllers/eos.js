@@ -132,6 +132,46 @@ exports.tn_createCertificate = async (req, res, next) => {
   }
 }
 
+exports.tn_deleteCertificate = async (req, res, next) => {
+  try {
+    const { certificateId, corporateId } = req.body;
+    // kontratın addcustomer actionını çağırma
+    const result = await eos.transact({
+      actions: [{
+        account: process.env.EOS_CONTRACT,
+        name: 'deletecert',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          id: certificateId,
+          corporateid: corporateId
+        },
+      }]
+      },
+      {
+          blocksBehind: 3,
+          expireSeconds: 30,
+      });
+
+    return res.status(201).json({
+      success: true,
+      errorCode: "",
+      message: "Certificate with " + certificateId + " id is deleted from corporate id " + corporateId + ".",
+      data: result
+    });
+  }
+  catch (error) {
+    return res.status(400).json({
+      success: false,
+      errorCode: error,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+}
+
 exports.tn_addSigner = async (req, res, next) => {
   try {
     const { certificateId, corporateId, signers } = req.body;
@@ -264,13 +304,16 @@ exports.tn_createSigner = async (req, res, next) => {
 exports.tn_signCertificate = async (req, res, next) => {
   try {
     const { signer, certificateId, corporateId, signerPrivate } = req.body;
-    const signSignatureProvider = new JsSignatureProvider([signerPrivate]);
+    const signSignatureProvider = new JsSignatureProvider([signerPrivate, defaultPrivateKey]);
     const signEos = new Api({ rpc, signatureProvider: signSignatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
     const result = await signEos.transact({
       actions: [{
         account: process.env.EOS_CONTRACT,
         name: 'signcert',
         authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        },{
           actor: signer,
           permission: 'active',
         }],
