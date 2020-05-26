@@ -10,6 +10,7 @@ router.post("/deletecertificate", eosController.tn_deleteCertificate);
 router.post("/addsigner", eosController.tn_addSigner);
 router.post("/signcertificate", eosController.tn_signCertificate);
 router.post("/createsigner", eosController.tn_createSigner);
+router.post("/createsignerandconfirm", eosController.tn_createSignerAndConfirm);
 router.get("/getcertificate", eosController.tn_getCertificate);
 router.get("/getcorporate", eosController.tn_getCorporate);
 module.exports = router;

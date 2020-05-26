@@ -4,7 +4,7 @@ const fetch = require('node-fetch');                                    // node 
 const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');      // development only
 const { TextEncoder, TextDecoder } = require('util');
 
-const defaultPrivateKey = process.env.EOS_PRIVATE_KEY; 
+const defaultPrivateKey = process.env.EOS_PRIVATE_KEY;
 const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
 
 const rpc = new JsonRpc(process.env.EOS_URL, { fetch });
@@ -27,10 +27,10 @@ exports.tn_createCorporate = async (req, res, next) => {
           create_amount: createAmount,
         },
       }]
-      },
+    },
       {
-          blocksBehind: 3,
-          expireSeconds: 30,
+        blocksBehind: 3,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -67,10 +67,10 @@ exports.tn_addAmount = async (req, res, next) => {
           amount
         },
       }]
-      },
+    },
       {
-          blocksBehind: 3,
-          expireSeconds: 30,
+        blocksBehind: 3,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -109,10 +109,10 @@ exports.tn_createCertificate = async (req, res, next) => {
           assignees
         },
       }]
-      },
+    },
       {
-          blocksBehind: 3,
-          expireSeconds: 30,
+        blocksBehind: 3,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -149,10 +149,10 @@ exports.tn_deleteCertificate = async (req, res, next) => {
           corporateid: corporateId
         },
       }]
-      },
+    },
       {
-          blocksBehind: 3,
-          expireSeconds: 30,
+        blocksBehind: 3,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -191,10 +191,10 @@ exports.tn_addSigner = async (req, res, next) => {
           signers
         },
       }]
-      },
+    },
       {
-          blocksBehind: 3,
-          expireSeconds: 30,
+        blocksBehind: 3,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -274,8 +274,8 @@ exports.tn_createSigner = async (req, res, next) => {
         data: {
           from: process.env.EOS_CONTRACT,
           receiver: req.body.accountName,
-          stake_net_quantity: '0.1000 EOS',
-          stake_cpu_quantity: '0.1000 EOS',
+          stake_net_quantity: '0.0001 EOS',
+          stake_cpu_quantity: '0.0001 EOS',
           transfer: false,
         }
       }]
@@ -287,7 +287,7 @@ exports.tn_createSigner = async (req, res, next) => {
       success: true,
       errorCode: "",
       message: "Account " + req.body.accountName + " created ",
-      keys: {privateKey: privateKey, publicKey: publicKey},
+      keys: { privateKey: privateKey, publicKey: publicKey },
       data: result
     });
   }
@@ -299,6 +299,138 @@ exports.tn_createSigner = async (req, res, next) => {
       data: {}
     });
   }
+}
+
+exports.tn_createSignerAndConfirm = async (req, res, next) => {
+  try {
+    const privateKey = await ecc.randomKey();
+    const publicKey = await ecc.privateToPublic(privateKey);
+    const { head_block_num: initialBlockNumber } = await rpc.get_info()
+    const result = await eos.transact({
+      actions: [{
+        account: 'eosio',
+        name: 'newaccount',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          creator: process.env.EOS_CONTRACT,
+          name: req.body.accountName,
+          owner: {
+            threshold: 1,
+            keys: [{
+              key: publicKey,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+          active: {
+            threshold: 1,
+            keys: [{
+              key: publicKey,
+              weight: 1
+            }],
+            accounts: [],
+            waits: []
+          },
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'buyrambytes',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          payer: process.env.EOS_CONTRACT,
+          receiver: req.body.accountName,
+          bytes: 3048,
+        },
+      },
+      {
+        account: 'eosio',
+        name: 'delegatebw',
+        authorization: [{
+          actor: process.env.EOS_CONTRACT,
+          permission: 'active',
+        }],
+        data: {
+          from: process.env.EOS_CONTRACT,
+          receiver: req.body.accountName,
+          stake_net_quantity: '0.0001 EOS',
+          stake_cpu_quantity: '0.0001 EOS',
+          transfer: false,
+        }
+      }]
+    }, {
+      blocksBehind: 3,
+      expireSeconds: 30,
+    });
+    let blockNumber = initialBlockNumber
+    let trxFound = false
+    let currentBlock = {}
+    const transactionId = result.transaction_id
+
+    const delay = async () => {
+      return new Promise((resolve) => {
+        setTimeout(()=>{
+          resolve()
+        }, 500)
+      })
+    }
+
+    const lookForTrx = async () => {
+      return new Promise(async (resolve, reject) => {
+        for(; blockNumber - initialBlockNumber < 20;) {
+          currentBlock = await rpc.get_block(blockNumber)
+          blockNumber++
+          const hasTrx = await blockHasTransaction(currentBlock, transactionId)
+          if(hasTrx) {
+            resolve(true)
+            break
+          }
+          await delay()
+        }
+        reject("Check block for transaction timeout!")
+      })
+    }
+    const trxResult = await lookForTrx()
+    if(trxResult) {
+      return res.status(201).json({
+        success: true,
+        errorCode: "",
+        message: "Account " + req.body.accountName + " created ",
+        keys: { privateKey: privateKey, publicKey: publicKey },
+        data: result
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      errorCode: error,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+  catch (error) {
+    return res.status(400).json({
+      success: false,
+      errorCode: error,
+      message: "Something went wrong, please check your inputs.",
+      data: {}
+    });
+  }
+}
+
+async function blockHasTransaction(block, transactionId) {
+  const { transactions } = block
+  if (transactions.length > 0) {
+    const result = await transactions.find((trxelm) => trxelm.trx.id === "transactionId")
+    return result
+  }
+  return false
 }
 
 exports.tn_signCertificate = async (req, res, next) => {
@@ -313,7 +445,7 @@ exports.tn_signCertificate = async (req, res, next) => {
         authorization: [{
           actor: process.env.EOS_CONTRACT,
           permission: 'active',
-        },{
+        }, {
           actor: signer,
           permission: 'active',
         }],
@@ -323,10 +455,10 @@ exports.tn_signCertificate = async (req, res, next) => {
           signerr: signer
         },
       }]
-      },
+    },
       {
-          blocksBehind: 30,
-          expireSeconds: 30,
+        blocksBehind: 30,
+        expireSeconds: 30,
       });
 
     return res.status(201).json({
@@ -349,10 +481,10 @@ exports.tn_signCertificate = async (req, res, next) => {
 exports.tn_getCertificate = async (req, res, next) => {
   try {
     const { certificateId, corporateId } = req.query;
-    if(typeof corporateId === 'undefined') {
+    if (typeof corporateId === 'undefined') {
       throw new Error("Valid corporateId had not been provided.");
     }
-    if(typeof certificateId === 'undefined') {
+    if (typeof certificateId === 'undefined') {
       throw new Error("Valid certificateId had not been provided.");
     }
     const result = await getTable("certificate", corporateId, certificateId);
@@ -377,7 +509,7 @@ exports.tn_getCertificate = async (req, res, next) => {
 exports.tn_getCorporate = async (req, res, next) => {
   try {
     const { corporateId } = req.query;
-    if(typeof corporateId === 'undefined') {
+    if (typeof corporateId === 'undefined') {
       throw new Error("Valid corporateId had not been provided.");
     }
     const result = await getTable("corporate", process.env.EOS_CONTRACT, corporateId);
@@ -410,8 +542,8 @@ async function getTable(tableName, scope, key) {
     show_payer: false,         // Optional: Show ram payer
     limit: 1,
   });
-  if(results.rows.length == 0) {
+  if (results.rows.length == 0) {
     throw new Error("No index found in " + tableName + " table with the key value: " + key);
   }
-    return results.rows[0];
+  return results.rows[0];
 };
