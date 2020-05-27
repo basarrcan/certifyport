@@ -427,7 +427,7 @@ exports.tn_createSignerAndConfirm = async (req, res, next) => {
 async function blockHasTransaction(block, transactionId) {
   const { transactions } = block
   if (transactions.length > 0) {
-    const result = await transactions.find((trxelm) => trxelm.trx.id === "transactionId")
+    const result = await transactions.find((trxelm) => trxelm.trx.id === transactionId)
     return result
   }
   return false
